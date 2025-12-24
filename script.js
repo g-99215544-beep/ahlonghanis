@@ -377,6 +377,7 @@ function updateUserUI() {
                     <div class="transaction-type">${t.type === "Debt" ? "Hutang" : "Bayaran"}</div>
                     <div class="transaction-meta">${t.timestamp}</div>
                     ${t.notes ? `<div class="transaction-meta">${t.notes}</div>` : ""}
+                    ${t.receiptURL ? `<a href="${t.receiptURL}" target="_blank" class="receipt-link">📷 Lihat Resit</a>` : ""}
                 </div>
                 <div class="transaction-amount">
                     <div class="amount ${t.type.toLowerCase()}">${t.type === "Debt" ? "+" : "-"}RM${formatCurrency(t.amount)}</div>
@@ -467,6 +468,7 @@ function updateAdminUI() {
                     <div class="transaction-type">${t.name} - ${t.type === "Debt" ? "Hutang" : "Bayaran"}</div>
                     <div class="transaction-meta">${t.timestamp}</div>
                     ${t.notes ? `<div class="transaction-meta">${t.notes}</div>` : ""}
+                    ${t.receiptURL ? `<a href="${t.receiptURL}" target="_blank" class="receipt-link">📷 Lihat Resit</a>` : ""}
                 </div>
                 <div class="transaction-amount">
                     <div class="amount ${t.type.toLowerCase()}">${t.type === "Debt" ? "+" : "-"}RM${formatCurrency(t.amount)}</div>
