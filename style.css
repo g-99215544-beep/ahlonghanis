@@ -1,7 +1,7 @@
 /**
  * ============================================
  * SISTEM PENJEJAK HUTANG KELUARGA
- * Stylesheet v3 - Fixed screen switching
+ * Stylesheet v4 - User Management
  * ============================================
  */
 
@@ -94,22 +94,24 @@ body {
 }
 
 /* ============================================
-   CRITICAL: SCREEN SWITCHING
+   SCREEN SWITCHING
    ============================================ */
 .hidden {
     display: none !important;
 }
 
-/* ALL screens hidden by default */
 .screen {
     display: none !important;
     min-height: 100vh;
     position: relative;
 }
 
-/* ONLY active screen is visible */
 .screen.active {
     display: block !important;
+}
+
+#loginScreen.active {
+    display: flex !important;
 }
 
 /* ============================================
@@ -166,8 +168,6 @@ body {
 
 .btn-danger:hover:not(:disabled) {
     background: #DC2626;
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
 }
 
 .btn-ghost {
@@ -185,6 +185,16 @@ body {
     width: 100%;
 }
 
+.btn-sm {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-sm);
+}
+
+.btn-xs {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-size-xs);
+}
+
 .btn-icon {
     font-size: var(--font-size-lg);
 }
@@ -197,11 +207,6 @@ body {
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
-}
-
-.btn-sm {
-    padding: var(--space-sm) var(--space-md);
-    font-size: var(--font-size-sm);
 }
 
 /* ============================================
@@ -373,10 +378,6 @@ body {
     justify-content: center;
     background: linear-gradient(135deg, var(--primary-light) 0%, var(--white) 100%);
     min-height: 100vh;
-}
-
-#loginScreen.active {
-    display: flex !important;
 }
 
 .login-container {
@@ -670,55 +671,95 @@ body {
     background: rgba(239, 68, 68, 0.2);
 }
 
-/* Summary Grid */
-.summary-grid {
-    display: grid;
-    grid-template-columns: 1fr;
+/* ============================================
+   USERS LIST (Admin)
+   ============================================ */
+.users-list {
+    display: flex;
+    flex-direction: column;
     gap: var(--space-md);
-    margin-bottom: var(--space-lg);
 }
 
-@media (min-width: 480px) {
-    .summary-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-.summary-card {
-    margin-bottom: 0;
-}
-
-.summary-header {
+.user-card {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gray-100);
 }
 
-.summary-avatar {
-    font-size: 28px;
+.user-card-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background: var(--primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    overflow: hidden;
 }
 
-.summary-name {
+.user-card-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-card-name {
     font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 2px;
+}
+
+.user-card-balance {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.user-card-password {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--font-size-sm);
+    color: var(--gray-500);
+    margin-top: var(--space-xs);
+}
+
+.user-card-password code {
+    background: var(--gray-200);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-family: monospace;
     color: var(--gray-700);
 }
 
-.summary-amount {
+.user-card-actions {
     display: flex;
-    align-items: baseline;
+    flex-direction: column;
     gap: var(--space-xs);
 }
 
-.summary-amount .currency {
-    font-size: var(--font-size-base);
-    color: var(--gray-500);
+/* Add User Form */
+.add-user-form {
+    background: var(--primary-lighter);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-lg);
+    border: 2px dashed var(--primary);
 }
 
-.summary-amount span:last-child {
-    font-size: var(--font-size-2xl);
-    font-weight: 700;
-    color: var(--primary);
+.add-user-form .input-group {
+    margin-bottom: 0;
 }
 
 /* ============================================
@@ -921,6 +962,95 @@ body {
 }
 
 /* ============================================
+   MODAL
+   ============================================ */
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    position: relative;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    width: 100%;
+    max-width: 400px;
+    animation: modalSlideIn 0.2s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.modal-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-100);
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    font-size: var(--font-size-base);
+    color: var(--gray-600);
+    transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+    background: var(--gray-200);
+}
+
+.modal-body {
+    padding: var(--space-lg);
+}
+
+.modal-subtitle {
+    color: var(--gray-600);
+    margin-bottom: var(--space-md);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    border-top: 1px solid var(--gray-200);
+}
+
+/* ============================================
    SPINNER
    ============================================ */
 .spinner {
@@ -1053,6 +1183,20 @@ body {
         margin-top: var(--space-sm);
         justify-content: flex-end;
     }
+    
+    .user-card {
+        flex-wrap: wrap;
+    }
+    
+    .user-card-actions {
+        width: 100%;
+        flex-direction: row;
+        margin-top: var(--space-sm);
+    }
+    
+    .user-card-actions .btn {
+        flex: 1;
+    }
 }
 
 /* ============================================
@@ -1063,7 +1207,8 @@ body {
     .btn,
     .file-upload,
     .pending-actions,
-    .transaction-actions {
+    .transaction-actions,
+    .user-card-actions {
         display: none !important;
     }
     
