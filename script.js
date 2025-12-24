@@ -11,7 +11,7 @@
 // ============================================
 // API URL - GANTI DENGAN URL ANDA
 // ============================================
-const API_URL = "https://script.google.com/macros/s/AKfycbxyb2cC_KRWBtvI4jOCA3Y74nBxNT-azwG-9Yw88vkbj267e1JUglI0kckXvFM7GI5s/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxXjOyObhZCzeLVp3RSM81BbaB9Og5_3EM0tO-4Xwegr8cc20BohgOR4MOTR2VRVeaH/exec";
 
 // ============================================
 // STATE MANAGEMENT
