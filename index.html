@@ -13,10 +13,6 @@
     <!-- CSS -->
     <link rel="stylesheet" href="style.css">
     
-    <!-- PWA Manifest (Optional) -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#10B981">
-    
     <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
 </head>
@@ -70,7 +66,15 @@
         <header class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <span class="avatar" id="userAvatar">👤</span>
+                    <!-- Profile Picture - Clickable -->
+                    <div class="avatar-wrapper" id="userAvatarWrapper">
+                        <img id="userAvatarImg" class="avatar-img" src="" alt="Profile">
+                        <span id="userAvatarEmoji" class="avatar-emoji">👤</span>
+                        <div class="avatar-overlay">
+                            <span>📷</span>
+                        </div>
+                        <input type="file" id="userAvatarInput" accept="image/*" class="avatar-input">
+                    </div>
                     <div>
                         <p class="greeting">Hai,</p>
                         <h2 id="userName">User</h2>
@@ -179,7 +183,15 @@
         <header class="header header-admin">
             <div class="header-content">
                 <div class="header-left">
-                    <span class="avatar">👨‍💼</span>
+                    <!-- Admin Profile Picture - Clickable -->
+                    <div class="avatar-wrapper" id="adminAvatarWrapper">
+                        <img id="adminAvatarImg" class="avatar-img" src="" alt="Profile">
+                        <span id="adminAvatarEmoji" class="avatar-emoji">👨‍💼</span>
+                        <div class="avatar-overlay">
+                            <span>📷</span>
+                        </div>
+                        <input type="file" id="adminAvatarInput" accept="image/*" class="avatar-input">
+                    </div>
                     <div>
                         <p class="greeting">Panel</p>
                         <h2>Admin</h2>
