@@ -66,7 +66,6 @@
         <header class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <!-- Profile Picture - Clickable -->
                     <div class="avatar-wrapper" id="userAvatarWrapper">
                         <img id="userAvatarImg" class="avatar-img" src="" alt="Profile">
                         <span id="userAvatarEmoji" class="avatar-emoji">👤</span>
@@ -125,7 +124,6 @@
                     <div class="input-group">
                         <label for="receiptInput">Resit Bayaran</label>
                         <div class="file-upload" id="fileUploadArea">
-                            <!-- Input tanpa capture supaya boleh pilih dari gallery -->
                             <input 
                                 type="file" 
                                 id="receiptInput" 
@@ -187,7 +185,6 @@
         <header class="header header-admin">
             <div class="header-content">
                 <div class="header-left">
-                    <!-- Admin Profile Picture - Clickable -->
                     <div class="avatar-wrapper" id="adminAvatarWrapper">
                         <img id="adminAvatarImg" class="avatar-img" src="" alt="Profile">
                         <span id="adminAvatarEmoji" class="avatar-emoji">👨‍💼</span>
@@ -208,28 +205,37 @@
         </header>
         
         <main class="main-content">
-            <!-- Summary Cards -->
-            <div class="summary-grid">
-                <div class="card summary-card">
-                    <div class="summary-header">
-                        <span class="summary-avatar">👧</span>
-                        <span class="summary-name">Qistina Hanan</span>
-                    </div>
-                    <div class="summary-amount">
-                        <span class="currency">RM</span>
-                        <span id="qistinaBalance">0.00</span>
+            <!-- User Management Section -->
+            <div class="card">
+                <h3 class="card-title">
+                    <span class="card-icon">👥</span>
+                    Senarai Penghutang
+                    <button type="button" class="btn btn-sm btn-primary" id="addUserBtn" style="margin-left: auto;">
+                        ➕ Tambah
+                    </button>
+                </h3>
+                
+                <!-- Add User Form (Hidden by default) -->
+                <div id="addUserForm" class="add-user-form hidden">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="newUserName">Nama Penghutang Baru</label>
+                            <input 
+                                type="text" 
+                                id="newUserName" 
+                                placeholder="Contoh: Ahmad Bin Ali"
+                            >
+                        </div>
+                        <div class="input-group" style="display: flex; align-items: flex-end; gap: 8px;">
+                            <button type="button" class="btn btn-primary" id="confirmAddUser">Tambah</button>
+                            <button type="button" class="btn btn-ghost" id="cancelAddUser">Batal</button>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="card summary-card">
-                    <div class="summary-header">
-                        <span class="summary-avatar">👦</span>
-                        <span class="summary-name">Haziq Haikal</span>
-                    </div>
-                    <div class="summary-amount">
-                        <span class="currency">RM</span>
-                        <span id="haziqBalance">0.00</span>
-                    </div>
+                <!-- Users List -->
+                <div id="usersList" class="users-list">
+                    <p class="empty-state">Memuatkan...</p>
                 </div>
             </div>
             
@@ -246,8 +252,6 @@
                             <label for="debtName">Nama</label>
                             <select id="debtName" required>
                                 <option value="">Pilih nama...</option>
-                                <option value="Qistina Hanan">Qistina Hanan</option>
-                                <option value="Haziq Haikal">Haziq Haikal</option>
                             </select>
                         </div>
                         
@@ -310,6 +314,30 @@
         <footer class="app-footer app-footer-dark">
             <p>© 2025 AnakTani</p>
         </footer>
+    </div>
+    
+    <!-- ============================================ -->
+    <!-- EDIT PASSWORD MODAL -->
+    <!-- ============================================ -->
+    <div id="editPasswordModal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Password</h3>
+                <button type="button" class="modal-close" id="closePasswordModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <p id="editPasswordUserName" class="modal-subtitle">Nama User</p>
+                <div class="input-group">
+                    <label for="editPasswordInput">Password Baru</label>
+                    <input type="text" id="editPasswordInput" placeholder="Masukkan password baru">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" id="cancelPasswordEdit">Batal</button>
+                <button type="button" class="btn btn-primary" id="savePasswordBtn">Simpan</button>
+            </div>
+        </div>
     </div>
     
     <!-- ============================================ -->
