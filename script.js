@@ -1,7 +1,8 @@
 /**
  * ============================================
  * SISTEM PENJEJAK HUTANG KELUARGA
- * Frontend JavaScript v3 - Fixed screen switching
+ * Frontend JavaScript v4
+ * - Profile pictures saved online (Google Drive)
  * ============================================
  */
 
@@ -41,11 +42,12 @@ let currentUser = null;
 let appData = {
     balances: {},
     pendingList: [],
-    transactions: []
+    transactions: [],
+    profiles: {}
 };
 
 // ============================================
-// DOM ELEMENTS - Initialize after DOM loaded
+// DOM ELEMENTS
 // ============================================
 let elements = {};
 
@@ -141,25 +143,17 @@ function showLoading(show = true) {
     }
 }
 
-// ============================================
-// CRITICAL: SCREEN SWITCHING FUNCTION
-// ============================================
 function switchScreen(screenId) {
-    // Hide ALL screens first
     const allScreens = document.querySelectorAll(".screen");
     allScreens.forEach(screen => {
         screen.classList.remove("active");
     });
     
-    // Show only the target screen
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
         targetScreen.classList.add("active");
-        // Scroll to top
         window.scrollTo(0, 0);
     }
-    
-    console.log("Switched to screen:", screenId);
 }
 
 function fileToBase64(file) {
@@ -172,24 +166,34 @@ function fileToBase64(file) {
 }
 
 // ============================================
-// PROFILE PICTURE FUNCTIONS
+// PROFILE PICTURE FUNCTIONS (ONLINE)
 // ============================================
 
-function saveProfilePicture(userKey, imageData) {
-    localStorage.setItem(`profile_${userKey}`, imageData);
-}
-
-function loadProfilePicture(userKey) {
-    return localStorage.getItem(`profile_${userKey}`);
-}
-
-function updateAvatarDisplay(imgElement, emojiElement, imageData) {
-    if (imageData && imgElement) {
-        imgElement.src = imageData;
+function updateAvatarDisplay(imgElement, emojiElement, imageURL) {
+    if (imageURL && imgElement) {
+        imgElement.src = imageURL;
         imgElement.classList.add("show");
     } else if (imgElement) {
         imgElement.src = "";
         imgElement.classList.remove("show");
+    }
+}
+
+async function uploadProfilePicture(userKey, imageBase64) {
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({
+                action: "updateProfile",
+                userKey: userKey,
+                image: imageBase64
+            })
+        });
+        return { success: true };
+    } catch (error) {
+        throw error;
     }
 }
 
@@ -207,13 +211,38 @@ async function handleAvatarUpload(e, userKey, imgElement, emojiElement) {
             return;
         }
         
+        showLoading(true);
+        
         try {
-            const imageData = await fileToBase64(file);
-            saveProfilePicture(userKey, imageData);
-            updateAvatarDisplay(imgElement, emojiElement, imageData);
+            const imageBase64 = await fileToBase64(file);
+            
+            // Upload to server
+            await uploadProfilePicture(userKey, imageBase64);
+            
+            // Show preview immediately
+            updateAvatarDisplay(imgElement, emojiElement, imageBase64);
+            
             showToast("Gambar profil berjaya dikemaskini!");
+            
+            // Refresh data after delay to get new URL
+            setTimeout(async () => {
+                await fetchData();
+                showLoading(false);
+            }, 2000);
+            
         } catch (error) {
             showToast("Gagal memuat naik gambar.", "error");
+            showLoading(false);
+        }
+    }
+}
+
+// Load profile picture from server data
+function loadProfileFromServer(userKey, imgElement, emojiElement) {
+    if (appData.profiles && appData.profiles[userKey]) {
+        const profileURL = appData.profiles[userKey].profilePicURL;
+        if (profileURL) {
+            updateAvatarDisplay(imgElement, emojiElement, profileURL);
         }
     }
 }
@@ -232,6 +261,15 @@ async function fetchData() {
         if (data.success) {
             appData = data;
             updateUI();
+            
+            // Update profile pictures from server
+            if (currentUser) {
+                if (currentUser.role === "admin") {
+                    loadProfileFromServer(currentUser.key, elements.adminAvatarImg, elements.adminAvatarEmoji);
+                } else {
+                    loadProfileFromServer(currentUser.key, elements.userAvatarImg, elements.userAvatarEmoji);
+                }
+            }
         } else {
             throw new Error(data.error || "Gagal memuatkan data");
         }
@@ -456,31 +494,21 @@ function handleLogin(e) {
         elements.passwordInput.value = "";
         
         if (currentUser.role === "admin") {
-            // Load admin profile picture
-            const adminPic = loadProfilePicture(currentUser.key);
-            updateAvatarDisplay(elements.adminAvatarImg, elements.adminAvatarEmoji, adminPic);
             if (elements.adminAvatarEmoji) {
                 elements.adminAvatarEmoji.textContent = currentUser.avatar;
             }
-            
-            // SWITCH TO ADMIN SCREEN - Hide login, show admin
             switchScreen("adminScreen");
         } else {
-            // Load user profile picture
-            const userPic = loadProfilePicture(currentUser.key);
-            updateAvatarDisplay(elements.userAvatarImg, elements.userAvatarEmoji, userPic);
             if (elements.userAvatarEmoji) {
                 elements.userAvatarEmoji.textContent = currentUser.avatar;
             }
             if (elements.userName) {
                 elements.userName.textContent = currentUser.name;
             }
-            
-            // SWITCH TO USER SCREEN - Hide login, show user dashboard
             switchScreen("userScreen");
         }
         
-        // Fetch data from API
+        // Fetch data (includes profile pictures)
         fetchData();
         
         showToast(`Selamat datang, ${currentUser.name}!`);
@@ -491,12 +519,20 @@ function handleLogin(e) {
 
 function handleLogout() {
     currentUser = null;
-    appData = { balances: {}, pendingList: [], transactions: [] };
+    appData = { balances: {}, pendingList: [], transactions: [], profiles: {} };
     
-    // SWITCH BACK TO LOGIN SCREEN
+    // Reset avatar displays
+    if (elements.userAvatarImg) {
+        elements.userAvatarImg.src = "";
+        elements.userAvatarImg.classList.remove("show");
+    }
+    if (elements.adminAvatarImg) {
+        elements.adminAvatarImg.src = "";
+        elements.adminAvatarImg.classList.remove("show");
+    }
+    
     switchScreen("loginScreen");
     
-    // Reset forms
     if (elements.paymentForm) elements.paymentForm.reset();
     if (elements.addDebtForm) elements.addDebtForm.reset();
     resetImagePreview();
@@ -706,20 +742,16 @@ async function handleDelete(rowIndex) {
 // INITIALIZE APP
 // ============================================
 document.addEventListener("DOMContentLoaded", () => {
-    // Initialize DOM elements
     initElements();
     
-    // Login form
     if (elements.loginForm) {
         elements.loginForm.addEventListener("submit", handleLogin);
     }
     
-    // Toggle password
     if (elements.togglePassword) {
         elements.togglePassword.addEventListener("click", handleTogglePassword);
     }
     
-    // Logout buttons
     if (elements.logoutBtn) {
         elements.logoutBtn.addEventListener("click", handleLogout);
     }
@@ -727,7 +759,7 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.adminLogoutBtn.addEventListener("click", handleLogout);
     }
     
-    // User Avatar Upload
+    // User Avatar Upload - ONLINE
     if (elements.userAvatarInput) {
         elements.userAvatarInput.addEventListener("change", (e) => {
             if (currentUser) {
@@ -736,7 +768,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
-    // Admin Avatar Upload
+    // Admin Avatar Upload - ONLINE
     if (elements.adminAvatarInput) {
         elements.adminAvatarInput.addEventListener("change", (e) => {
             if (currentUser) {
@@ -745,7 +777,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
-    // File upload for receipt
     if (elements.receiptInput) {
         elements.receiptInput.addEventListener("change", handleFileChange);
     }
@@ -753,7 +784,6 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.removeImage.addEventListener("click", resetImagePreview);
     }
     
-    // Drag and drop support
     if (elements.fileUploadArea) {
         elements.fileUploadArea.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -781,17 +811,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
-    // Payment form
     if (elements.paymentForm) {
         elements.paymentForm.addEventListener("submit", handlePaymentSubmit);
     }
     
-    // Add debt form
     if (elements.addDebtForm) {
         elements.addDebtForm.addEventListener("submit", handleAddDebtSubmit);
     }
     
-    console.log("App initialized successfully!");
+    console.log("App initialized - Profile pictures now saved online!");
 });
 
 // ============================================
