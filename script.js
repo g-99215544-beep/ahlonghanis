@@ -9,7 +9,7 @@
 // ============================================
 // API URL
 // ============================================
-const API_URL = "https://script.google.com/macros/s/AKfycbxyb2cC_KRWBtvI4jOCA3Y74nBxNT-azwG-9Yw88vkbj267e1JUglI0kckXvFM7GI5s/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwjjzMzpRWOl5It3yUBrJVmEiO1CAoU5sxXM_Vr-Nx_3AGvqLWGvKvdcGyHfUPogIcm/exec";
 
 // ============================================
 // KONFIGURASI LOGIN
