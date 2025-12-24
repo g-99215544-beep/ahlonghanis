@@ -125,16 +125,16 @@
                     <div class="input-group">
                         <label for="receiptInput">Resit Bayaran</label>
                         <div class="file-upload" id="fileUploadArea">
+                            <!-- Input tanpa capture supaya boleh pilih dari gallery -->
                             <input 
                                 type="file" 
                                 id="receiptInput" 
                                 accept="image/*"
-                                capture="environment"
                                 required
                             >
-                            <div class="file-upload-content">
-                                <span class="file-icon">📷</span>
-                                <span class="file-text">Klik atau seret gambar resit</span>
+                            <div class="file-upload-content" id="fileUploadContent">
+                                <span class="file-icon">🖼️</span>
+                                <span class="file-text">Pilih dari Galeri atau Ambil Gambar</span>
                                 <span class="file-hint">PNG, JPG (Max 5MB)</span>
                             </div>
                             <div id="imagePreview" class="image-preview hidden">
