@@ -6,12 +6,9 @@
  */
 
 // ============================================
-// ⚠️ PENTING: TUKAR URL INI ⚠️
+// API URL - SUDAH DIKONFIGURASI
 // ============================================
-// Paste URL Web App dari Google Apps Script di sini
-// Contoh: "https://script.google.com/macros/s/AKfycbxxxxxxx/exec"
-const API_URL = "https://script.google.com/macros/s/AKfycbyxqat-dT2DIp5G4WIJQAwfhcsOxoIMAfWho8qWYrd133DtTt_5yWnYZYKpJLK_gWyw/exec";
-// ============================================
+const API_URL = "https://script.google.com/macros/s/AKfycbxyb2cC_KRWBtvI4jOCA3Y74nBxNT-azwG-9Yw88vkbj267e1JUglI0kckXvFM7GI5s/exec";
 
 // ============================================
 // KONFIGURASI LOGIN
@@ -194,8 +191,9 @@ async function submitPayment(name, amount, imageBase64, notes) {
     try {
         const response = await fetch(API_URL, {
             method: "POST",
+            mode: "no-cors",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "text/plain"
             },
             body: JSON.stringify({
                 action: "payment",
@@ -206,13 +204,10 @@ async function submitPayment(name, amount, imageBase64, notes) {
             })
         });
         
-        const data = await response.json();
+        // Dengan no-cors, kita tak dapat baca response
+        // Jadi kita anggap berjaya dan refresh data
+        return { success: true };
         
-        if (data.success) {
-            return data;
-        } else {
-            throw new Error(data.error || "Gagal menghantar bayaran");
-        }
     } catch (error) {
         throw error;
     }
@@ -223,8 +218,9 @@ async function approvePayment(rowIndex) {
     try {
         const response = await fetch(API_URL, {
             method: "POST",
+            mode: "no-cors",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "text/plain"
             },
             body: JSON.stringify({
                 action: "approve",
@@ -232,13 +228,8 @@ async function approvePayment(rowIndex) {
             })
         });
         
-        const data = await response.json();
+        return { success: true };
         
-        if (data.success) {
-            return data;
-        } else {
-            throw new Error(data.error || "Gagal meluluskan bayaran");
-        }
     } catch (error) {
         throw error;
     }
@@ -249,8 +240,9 @@ async function rejectPayment(rowIndex) {
     try {
         const response = await fetch(API_URL, {
             method: "POST",
+            mode: "no-cors",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "text/plain"
             },
             body: JSON.stringify({
                 action: "reject",
@@ -258,13 +250,8 @@ async function rejectPayment(rowIndex) {
             })
         });
         
-        const data = await response.json();
+        return { success: true };
         
-        if (data.success) {
-            return data;
-        } else {
-            throw new Error(data.error || "Gagal menolak bayaran");
-        }
     } catch (error) {
         throw error;
     }
@@ -275,8 +262,9 @@ async function addDebt(name, amount, notes) {
     try {
         const response = await fetch(API_URL, {
             method: "POST",
+            mode: "no-cors",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "text/plain"
             },
             body: JSON.stringify({
                 action: "addDebt",
@@ -286,13 +274,8 @@ async function addDebt(name, amount, notes) {
             })
         });
         
-        const data = await response.json();
+        return { success: true };
         
-        if (data.success) {
-            return data;
-        } else {
-            throw new Error(data.error || "Gagal menambah hutang");
-        }
     } catch (error) {
         throw error;
     }
@@ -548,8 +531,10 @@ async function handlePaymentSubmit(e) {
         elements.paymentForm.reset();
         resetImagePreview();
         
-        // Refresh data
-        await fetchData();
+        // Tunggu sebentar kemudian refresh data
+        setTimeout(async () => {
+            await fetchData();
+        }, 1500);
         
     } catch (error) {
         console.error("Payment error:", error);
@@ -595,8 +580,10 @@ async function handleAddDebtSubmit(e) {
         // Reset form
         elements.addDebtForm.reset();
         
-        // Refresh data
-        await fetchData();
+        // Tunggu sebentar kemudian refresh data
+        setTimeout(async () => {
+            await fetchData();
+        }, 1500);
         
     } catch (error) {
         console.error("Add debt error:", error);
@@ -620,11 +607,16 @@ async function handleApprove(rowIndex) {
     try {
         await approvePayment(rowIndex);
         showToast("Bayaran telah diluluskan!");
-        await fetchData();
+        
+        // Tunggu sebentar kemudian refresh data
+        setTimeout(async () => {
+            await fetchData();
+            showLoading(false);
+        }, 1500);
+        
     } catch (error) {
         console.error("Approve error:", error);
         showToast("Gagal meluluskan bayaran: " + error.message, "error");
-    } finally {
         showLoading(false);
     }
 }
@@ -640,11 +632,16 @@ async function handleReject(rowIndex) {
     try {
         await rejectPayment(rowIndex);
         showToast("Bayaran telah ditolak.");
-        await fetchData();
+        
+        // Tunggu sebentar kemudian refresh data
+        setTimeout(async () => {
+            await fetchData();
+            showLoading(false);
+        }, 1500);
+        
     } catch (error) {
         console.error("Reject error:", error);
         showToast("Gagal menolak bayaran: " + error.message, "error");
-    } finally {
         showLoading(false);
     }
 }
@@ -696,11 +693,6 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Add debt form
     elements.addDebtForm.addEventListener("submit", handleAddDebtSubmit);
-    
-    // Check if API URL is configured
-    if (API_URL === "PASTE_URL_WEB_APP_ANDA_DI_SINI") {
-        console.warn("⚠️ API URL belum dikonfigurasi! Sila tukar nilai API_URL dalam script.js");
-    }
 });
 
 // ============================================
