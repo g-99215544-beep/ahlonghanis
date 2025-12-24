@@ -2,38 +2,16 @@
  * ============================================
  * SISTEM PENJEJAK HUTANG KELUARGA
  * Frontend JavaScript v4
- * - Profile pictures saved online (Google Drive)
+ * - Dynamic users from database
+ * - User management (add/edit/delete)
+ * - Fixed profile picture URL
  * ============================================
  */
 
 // ============================================
-// API URL
+// API URL - GANTI DENGAN URL ANDA
 // ============================================
-const API_URL = "https://script.google.com/macros/s/AKfycbwjjzMzpRWOl5It3yUBrJVmEiO1CAoU5sxXM_Vr-Nx_3AGvqLWGvKvdcGyHfUPogIcm/exec";
-
-// ============================================
-// KONFIGURASI LOGIN
-// ============================================
-const USERS = {
-    "qis12345": {
-        name: "Qistina Hanan",
-        role: "user",
-        avatar: "👧",
-        key: "qistina"
-    },
-    "ziq12345": {
-        name: "Haziq Haikal",
-        role: "user",
-        avatar: "👦",
-        key: "haziq"
-    },
-    "admin123": {
-        name: "Admin",
-        role: "admin",
-        avatar: "👨‍💼",
-        key: "admin"
-    }
-};
+const API_URL = "https://script.google.com/macros/s/AKfycbxyb2cC_KRWBtvI4jOCA3Y74nBxNT-azwG-9Yw88vkbj267e1JUglI0kckXvFM7GI5s/exec";
 
 // ============================================
 // STATE MANAGEMENT
@@ -43,8 +21,9 @@ let appData = {
     balances: {},
     pendingList: [],
     transactions: [],
-    profiles: {}
+    users: {}
 };
+let editingUserKey = null;
 
 // ============================================
 // DOM ELEMENTS
@@ -65,7 +44,6 @@ function initElements() {
         loginError: document.getElementById("loginError"),
         
         // User Screen
-        userAvatarWrapper: document.getElementById("userAvatarWrapper"),
         userAvatarImg: document.getElementById("userAvatarImg"),
         userAvatarEmoji: document.getElementById("userAvatarEmoji"),
         userAvatarInput: document.getElementById("userAvatarInput"),
@@ -88,13 +66,16 @@ function initElements() {
         userTransactions: document.getElementById("userTransactions"),
         
         // Admin Screen
-        adminAvatarWrapper: document.getElementById("adminAvatarWrapper"),
         adminAvatarImg: document.getElementById("adminAvatarImg"),
         adminAvatarEmoji: document.getElementById("adminAvatarEmoji"),
         adminAvatarInput: document.getElementById("adminAvatarInput"),
         adminLogoutBtn: document.getElementById("adminLogoutBtn"),
-        qistinaBalance: document.getElementById("qistinaBalance"),
-        haziqBalance: document.getElementById("haziqBalance"),
+        usersList: document.getElementById("usersList"),
+        addUserBtn: document.getElementById("addUserBtn"),
+        addUserForm: document.getElementById("addUserForm"),
+        newUserName: document.getElementById("newUserName"),
+        confirmAddUser: document.getElementById("confirmAddUser"),
+        cancelAddUser: document.getElementById("cancelAddUser"),
         addDebtForm: document.getElementById("addDebtForm"),
         debtName: document.getElementById("debtName"),
         debtAmount: document.getElementById("debtAmount"),
@@ -103,6 +84,14 @@ function initElements() {
         pendingCount: document.getElementById("pendingCount"),
         pendingList: document.getElementById("pendingList"),
         allTransactions: document.getElementById("allTransactions"),
+        
+        // Modal
+        editPasswordModal: document.getElementById("editPasswordModal"),
+        editPasswordUserName: document.getElementById("editPasswordUserName"),
+        editPasswordInput: document.getElementById("editPasswordInput"),
+        closePasswordModal: document.getElementById("closePasswordModal"),
+        cancelPasswordEdit: document.getElementById("cancelPasswordEdit"),
+        savePasswordBtn: document.getElementById("savePasswordBtn"),
         
         // Global
         toast: document.getElementById("toast"),
@@ -166,7 +155,7 @@ function fileToBase64(file) {
 }
 
 // ============================================
-// PROFILE PICTURE FUNCTIONS (ONLINE)
+// PROFILE PICTURE FUNCTIONS
 // ============================================
 
 function updateAvatarDisplay(imgElement, emojiElement, imageURL) {
@@ -215,16 +204,10 @@ async function handleAvatarUpload(e, userKey, imgElement, emojiElement) {
         
         try {
             const imageBase64 = await fileToBase64(file);
-            
-            // Upload to server
             await uploadProfilePicture(userKey, imageBase64);
-            
-            // Show preview immediately
             updateAvatarDisplay(imgElement, emojiElement, imageBase64);
-            
             showToast("Gambar profil berjaya dikemaskini!");
             
-            // Refresh data after delay to get new URL
             setTimeout(async () => {
                 await fetchData();
                 showLoading(false);
@@ -233,16 +216,6 @@ async function handleAvatarUpload(e, userKey, imgElement, emojiElement) {
         } catch (error) {
             showToast("Gagal memuat naik gambar.", "error");
             showLoading(false);
-        }
-    }
-}
-
-// Load profile picture from server data
-function loadProfileFromServer(userKey, imgElement, emojiElement) {
-    if (appData.profiles && appData.profiles[userKey]) {
-        const profileURL = appData.profiles[userKey].profilePicURL;
-        if (profileURL) {
-            updateAvatarDisplay(imgElement, emojiElement, profileURL);
         }
     }
 }
@@ -262,12 +235,15 @@ async function fetchData() {
             appData = data;
             updateUI();
             
-            // Update profile pictures from server
+            // Update profile pictures
             if (currentUser) {
-                if (currentUser.role === "admin") {
-                    loadProfileFromServer(currentUser.key, elements.adminAvatarImg, elements.adminAvatarEmoji);
-                } else {
-                    loadProfileFromServer(currentUser.key, elements.userAvatarImg, elements.userAvatarEmoji);
+                const userInfo = appData.users[currentUser.key];
+                if (userInfo && userInfo.profilePicURL) {
+                    if (currentUser.role === "admin") {
+                        updateAvatarDisplay(elements.adminAvatarImg, elements.adminAvatarEmoji, userInfo.profilePicURL);
+                    } else {
+                        updateAvatarDisplay(elements.userAvatarImg, elements.userAvatarEmoji, userInfo.profilePicURL);
+                    }
                 }
             }
         } else {
@@ -282,93 +258,81 @@ async function fetchData() {
 }
 
 async function submitPayment(name, amount, imageBase64, notes) {
-    try {
-        await fetch(API_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({
-                action: "payment",
-                name: name,
-                amount: amount,
-                image: imageBase64,
-                notes: notes
-            })
-        });
-        return { success: true };
-    } catch (error) {
-        throw error;
-    }
+    await fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+            action: "payment",
+            name: name,
+            amount: amount,
+            image: imageBase64,
+            notes: notes
+        })
+    });
 }
 
 async function approvePayment(rowIndex) {
-    try {
-        await fetch(API_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({
-                action: "approve",
-                rowIndex: rowIndex
-            })
-        });
-        return { success: true };
-    } catch (error) {
-        throw error;
-    }
+    await fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "approve", rowIndex: rowIndex })
+    });
 }
 
 async function rejectPayment(rowIndex) {
-    try {
-        await fetch(API_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({
-                action: "reject",
-                rowIndex: rowIndex
-            })
-        });
-        return { success: true };
-    } catch (error) {
-        throw error;
-    }
+    await fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "reject", rowIndex: rowIndex })
+    });
 }
 
 async function addDebt(name, amount, notes) {
-    try {
-        await fetch(API_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({
-                action: "addDebt",
-                name: name,
-                amount: amount,
-                notes: notes
-            })
-        });
-        return { success: true };
-    } catch (error) {
-        throw error;
-    }
+    await fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "addDebt", name: name, amount: amount, notes: notes })
+    });
 }
 
 async function deleteTransaction(rowIndex) {
-    try {
-        await fetch(API_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({
-                action: "delete",
-                rowIndex: rowIndex
-            })
-        });
-        return { success: true };
-    } catch (error) {
-        throw error;
-    }
+    await fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "delete", rowIndex: rowIndex })
+    });
+}
+
+async function addUser(name) {
+    await fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "addUser", name: name })
+    });
+}
+
+async function updatePassword(userKey, password) {
+    await fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "updatePassword", userKey: userKey, password: password })
+    });
+}
+
+async function deleteUser(userKey) {
+    await fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "deleteUser", userKey: userKey })
+    });
 }
 
 // ============================================
@@ -424,16 +388,52 @@ function updateUserUI() {
 }
 
 function updateAdminUI() {
-    elements.qistinaBalance.textContent = formatCurrency(appData.balances["Qistina Hanan"] || 0);
-    elements.haziqBalance.textContent = formatCurrency(appData.balances["Haziq Haikal"] || 0);
+    // Update Users List with balance and password
+    const usersHtml = Object.entries(appData.users)
+        .filter(([key, user]) => user.role !== "admin")
+        .map(([key, user]) => {
+            const balance = appData.balances[user.name] || 0;
+            const avatarContent = user.profilePicURL 
+                ? `<img src="${user.profilePicURL}" alt="${user.name}">`
+                : "👤";
+            
+            return `
+                <div class="user-card" data-user-key="${key}">
+                    <div class="user-card-avatar">${avatarContent}</div>
+                    <div class="user-card-info">
+                        <div class="user-card-name">${user.name}</div>
+                        <div class="user-card-balance">RM ${formatCurrency(balance)}</div>
+                        <div class="user-card-password">
+                            🔑 <code>${user.password}</code>
+                        </div>
+                    </div>
+                    <div class="user-card-actions">
+                        <button class="btn btn-xs btn-secondary" onclick="openEditPassword('${key}', '${user.name}', '${user.password}')">✏️ Edit</button>
+                        <button class="btn btn-xs btn-danger" onclick="handleDeleteUser('${key}', '${user.name}')">🗑️</button>
+                    </div>
+                </div>
+            `;
+        }).join("");
     
+    elements.usersList.innerHTML = usersHtml || `<p class="empty-state">Tiada penghutang. Klik "Tambah" untuk menambah.</p>`;
+    
+    // Update debt dropdown with users
+    const debtOptions = Object.entries(appData.users)
+        .filter(([key, user]) => user.role !== "admin")
+        .map(([key, user]) => `<option value="${user.name}">${user.name}</option>`)
+        .join("");
+    
+    elements.debtName.innerHTML = `<option value="">Pilih nama...</option>${debtOptions}`;
+    
+    // Update pending count
     elements.pendingCount.textContent = appData.pendingList.length;
     
+    // Update pending list
     if (appData.pendingList.length === 0) {
         elements.pendingList.innerHTML = `<p class="empty-state">Tiada bayaran menunggu kelulusan</p>`;
     } else {
         elements.pendingList.innerHTML = appData.pendingList.map(t => `
-            <div class="pending-item" data-row="${t.rowIndex}">
+            <div class="pending-item">
                 <div class="transaction-icon payment">📤</div>
                 <div class="transaction-details">
                     <div class="transaction-type">${t.name}</div>
@@ -452,6 +452,7 @@ function updateAdminUI() {
         `).join("");
     }
     
+    // Update all transactions
     const sortedTransactions = [...appData.transactions].reverse();
     
     if (sortedTransactions.length === 0) {
@@ -488,29 +489,51 @@ function handleLogin(e) {
     
     const password = elements.passwordInput.value.trim();
     
-    if (USERS[password]) {
-        currentUser = USERS[password];
+    // Find user by password
+    let foundUser = null;
+    let foundKey = null;
+    
+    for (const [key, user] of Object.entries(appData.users)) {
+        if (user.password === password) {
+            foundUser = user;
+            foundKey = key;
+            break;
+        }
+    }
+    
+    if (foundUser) {
+        currentUser = {
+            key: foundKey,
+            name: foundUser.name,
+            role: foundUser.role || "user",
+            profilePicURL: foundUser.profilePicURL
+        };
+        
         elements.loginError.textContent = "";
         elements.passwordInput.value = "";
         
         if (currentUser.role === "admin") {
             if (elements.adminAvatarEmoji) {
-                elements.adminAvatarEmoji.textContent = currentUser.avatar;
+                elements.adminAvatarEmoji.textContent = "👨‍💼";
+            }
+            if (foundUser.profilePicURL) {
+                updateAvatarDisplay(elements.adminAvatarImg, elements.adminAvatarEmoji, foundUser.profilePicURL);
             }
             switchScreen("adminScreen");
         } else {
             if (elements.userAvatarEmoji) {
-                elements.userAvatarEmoji.textContent = currentUser.avatar;
+                elements.userAvatarEmoji.textContent = "👤";
             }
             if (elements.userName) {
                 elements.userName.textContent = currentUser.name;
             }
+            if (foundUser.profilePicURL) {
+                updateAvatarDisplay(elements.userAvatarImg, elements.userAvatarEmoji, foundUser.profilePicURL);
+            }
             switchScreen("userScreen");
         }
         
-        // Fetch data (includes profile pictures)
         fetchData();
-        
         showToast(`Selamat datang, ${currentUser.name}!`);
     } else {
         elements.loginError.textContent = "Kata laluan tidak sah. Sila cuba lagi.";
@@ -519,9 +542,7 @@ function handleLogin(e) {
 
 function handleLogout() {
     currentUser = null;
-    appData = { balances: {}, pendingList: [], transactions: [], profiles: {} };
     
-    // Reset avatar displays
     if (elements.userAvatarImg) {
         elements.userAvatarImg.src = "";
         elements.userAvatarImg.classList.remove("show");
@@ -536,6 +557,9 @@ function handleLogout() {
     if (elements.paymentForm) elements.paymentForm.reset();
     if (elements.addDebtForm) elements.addDebtForm.reset();
     resetImagePreview();
+    
+    // Re-fetch data for fresh login
+    fetchData();
 }
 
 function handleTogglePassword() {
@@ -607,7 +631,6 @@ async function handlePaymentSubmit(e) {
         await submitPayment(currentUser.name, amount, imageBase64, notes);
         
         showToast("Bayaran berjaya dihantar! Menunggu kelulusan.");
-        
         elements.paymentForm.reset();
         resetImagePreview();
         
@@ -616,7 +639,6 @@ async function handlePaymentSubmit(e) {
         }, 1500);
         
     } catch (error) {
-        console.error("Payment error:", error);
         showToast("Gagal menghantar bayaran: " + error.message, "error");
     } finally {
         btnText.classList.remove("hidden");
@@ -650,9 +672,7 @@ async function handleAddDebtSubmit(e) {
     
     try {
         await addDebt(name, amount, notes);
-        
         showToast("Hutang berjaya ditambah!");
-        
         elements.addDebtForm.reset();
         
         setTimeout(async () => {
@@ -660,7 +680,6 @@ async function handleAddDebtSubmit(e) {
         }, 1500);
         
     } catch (error) {
-        console.error("Add debt error:", error);
         showToast("Gagal menambah hutang: " + error.message, "error");
     } finally {
         btnText.classList.remove("hidden");
@@ -668,6 +687,117 @@ async function handleAddDebtSubmit(e) {
         elements.addDebtBtn.disabled = false;
     }
 }
+
+// ============================================
+// USER MANAGEMENT HANDLERS
+// ============================================
+
+function showAddUserForm() {
+    elements.addUserForm.classList.remove("hidden");
+    elements.newUserName.focus();
+}
+
+function hideAddUserForm() {
+    elements.addUserForm.classList.add("hidden");
+    elements.newUserName.value = "";
+}
+
+async function handleAddUser() {
+    const name = elements.newUserName.value.trim();
+    
+    if (!name) {
+        showToast("Sila masukkan nama penghutang.", "error");
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        await addUser(name);
+        showToast("Penghutang baru berjaya ditambah!");
+        hideAddUserForm();
+        
+        setTimeout(async () => {
+            await fetchData();
+            showLoading(false);
+        }, 1500);
+        
+    } catch (error) {
+        showToast("Gagal menambah penghutang: " + error.message, "error");
+        showLoading(false);
+    }
+}
+
+function openEditPassword(userKey, userName, currentPassword) {
+    editingUserKey = userKey;
+    elements.editPasswordUserName.textContent = userName;
+    elements.editPasswordInput.value = currentPassword;
+    elements.editPasswordModal.classList.remove("hidden");
+    elements.editPasswordInput.focus();
+}
+
+function closeEditPasswordModal() {
+    elements.editPasswordModal.classList.add("hidden");
+    editingUserKey = null;
+    elements.editPasswordInput.value = "";
+}
+
+async function handleSavePassword() {
+    const newPassword = elements.editPasswordInput.value.trim();
+    
+    if (!newPassword) {
+        showToast("Sila masukkan password baru.", "error");
+        return;
+    }
+    
+    if (newPassword.length < 4) {
+        showToast("Password mesti sekurang-kurangnya 4 aksara.", "error");
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        await updatePassword(editingUserKey, newPassword);
+        showToast("Password berjaya dikemaskini!");
+        closeEditPasswordModal();
+        
+        setTimeout(async () => {
+            await fetchData();
+            showLoading(false);
+        }, 1500);
+        
+    } catch (error) {
+        showToast("Gagal mengemaskini password: " + error.message, "error");
+        showLoading(false);
+    }
+}
+
+async function handleDeleteUser(userKey, userName) {
+    if (!confirm(`Adakah anda pasti mahu PADAM penghutang "${userName}"? Tindakan ini tidak boleh dibatalkan!`)) {
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        await deleteUser(userKey);
+        showToast("Penghutang berjaya dipadam!");
+        
+        setTimeout(async () => {
+            await fetchData();
+            showLoading(false);
+        }, 1500);
+        
+    } catch (error) {
+        showToast("Gagal memadam penghutang: " + error.message, "error");
+        showLoading(false);
+    }
+}
+
+// ============================================
+// TRANSACTION HANDLERS
+// ============================================
 
 async function handleApprove(rowIndex) {
     if (!confirm("Adakah anda pasti mahu meluluskan bayaran ini?")) {
@@ -686,7 +816,6 @@ async function handleApprove(rowIndex) {
         }, 1500);
         
     } catch (error) {
-        console.error("Approve error:", error);
         showToast("Gagal meluluskan bayaran: " + error.message, "error");
         showLoading(false);
     }
@@ -709,7 +838,6 @@ async function handleReject(rowIndex) {
         }, 1500);
         
     } catch (error) {
-        console.error("Reject error:", error);
         showToast("Gagal menolak bayaran: " + error.message, "error");
         showLoading(false);
     }
@@ -732,7 +860,6 @@ async function handleDelete(rowIndex) {
         }, 1500);
         
     } catch (error) {
-        console.error("Delete error:", error);
         showToast("Gagal memadam transaksi: " + error.message, "error");
         showLoading(false);
     }
@@ -741,9 +868,21 @@ async function handleDelete(rowIndex) {
 // ============================================
 // INITIALIZE APP
 // ============================================
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     initElements();
     
+    // Fetch initial data (for login validation)
+    try {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        if (data.success) {
+            appData = data;
+        }
+    } catch (error) {
+        console.error("Initial fetch error:", error);
+    }
+    
+    // Login form
     if (elements.loginForm) {
         elements.loginForm.addEventListener("submit", handleLogin);
     }
@@ -752,6 +891,7 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.togglePassword.addEventListener("click", handleTogglePassword);
     }
     
+    // Logout buttons
     if (elements.logoutBtn) {
         elements.logoutBtn.addEventListener("click", handleLogout);
     }
@@ -759,7 +899,7 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.adminLogoutBtn.addEventListener("click", handleLogout);
     }
     
-    // User Avatar Upload - ONLINE
+    // User Avatar Upload
     if (elements.userAvatarInput) {
         elements.userAvatarInput.addEventListener("change", (e) => {
             if (currentUser) {
@@ -768,7 +908,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
-    // Admin Avatar Upload - ONLINE
+    // Admin Avatar Upload
     if (elements.adminAvatarInput) {
         elements.adminAvatarInput.addEventListener("change", (e) => {
             if (currentUser) {
@@ -777,6 +917,34 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
+    // Add User buttons
+    if (elements.addUserBtn) {
+        elements.addUserBtn.addEventListener("click", showAddUserForm);
+    }
+    if (elements.confirmAddUser) {
+        elements.confirmAddUser.addEventListener("click", handleAddUser);
+    }
+    if (elements.cancelAddUser) {
+        elements.cancelAddUser.addEventListener("click", hideAddUserForm);
+    }
+    
+    // Password Modal
+    if (elements.closePasswordModal) {
+        elements.closePasswordModal.addEventListener("click", closeEditPasswordModal);
+    }
+    if (elements.cancelPasswordEdit) {
+        elements.cancelPasswordEdit.addEventListener("click", closeEditPasswordModal);
+    }
+    if (elements.savePasswordBtn) {
+        elements.savePasswordBtn.addEventListener("click", handleSavePassword);
+    }
+    
+    // Close modal on backdrop click
+    if (elements.editPasswordModal) {
+        elements.editPasswordModal.querySelector(".modal-backdrop").addEventListener("click", closeEditPasswordModal);
+    }
+    
+    // File upload
     if (elements.receiptInput) {
         elements.receiptInput.addEventListener("change", handleFileChange);
     }
@@ -784,6 +952,7 @@ document.addEventListener("DOMContentLoaded", () => {
         elements.removeImage.addEventListener("click", resetImagePreview);
     }
     
+    // Drag and drop
     if (elements.fileUploadArea) {
         elements.fileUploadArea.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -811,15 +980,15 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
     
+    // Forms
     if (elements.paymentForm) {
         elements.paymentForm.addEventListener("submit", handlePaymentSubmit);
     }
-    
     if (elements.addDebtForm) {
         elements.addDebtForm.addEventListener("submit", handleAddDebtSubmit);
     }
     
-    console.log("App initialized - Profile pictures now saved online!");
+    console.log("App initialized - v4 with User Management!");
 });
 
 // ============================================
@@ -828,3 +997,5 @@ document.addEventListener("DOMContentLoaded", () => {
 window.handleApprove = handleApprove;
 window.handleReject = handleReject;
 window.handleDelete = handleDelete;
+window.openEditPassword = openEditPassword;
+window.handleDeleteUser = handleDeleteUser;
