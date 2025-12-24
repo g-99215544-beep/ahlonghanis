@@ -1,15 +1,12 @@
 /**
  * ============================================
  * SISTEM PENJEJAK HUTANG KELUARGA
- * Stylesheet
+ * Stylesheet v2
  * ============================================
- * 
- * Design: Clean, Modern, Mobile-First
- * Color Scheme: Green & White
  */
 
 /* ============================================
-   CSS VARIABLES - Tukar warna di sini
+   CSS VARIABLES
    ============================================ */
 :root {
     /* Primary Colors */
@@ -168,6 +165,17 @@ body {
     box-shadow: var(--shadow-md);
 }
 
+.btn-danger {
+    background: var(--error);
+    color: var(--white);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #DC2626;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
 .btn-ghost {
     background: transparent;
     color: var(--gray-600);
@@ -195,6 +203,11 @@ body {
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
+}
+
+.btn-sm {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-size-sm);
 }
 
 /* ============================================
@@ -463,19 +476,72 @@ body {
     gap: var(--space-md);
 }
 
-.avatar {
-    width: 44px;
-    height: 44px;
+/* ============================================
+   AVATAR / PROFILE PICTURE
+   ============================================ */
+.avatar-wrapper {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--primary-light);
+    flex-shrink: 0;
+}
+
+.header-admin .avatar-wrapper {
+    background: var(--gray-700);
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none;
+}
+
+.avatar-img.show {
+    display: block;
+}
+
+.avatar-emoji {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 28px;
+}
+
+.avatar-img.show + .avatar-emoji {
+    display: none;
+}
+
+.avatar-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--primary-light);
-    border-radius: var(--radius-full);
-    font-size: 24px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
 }
 
-.header-admin .avatar {
-    background: var(--gray-700);
+.avatar-overlay span {
+    color: white;
+    font-size: 18px;
+}
+
+.avatar-wrapper:hover .avatar-overlay {
+    opacity: 1;
+}
+
+.avatar-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
 }
 
 .greeting {
@@ -732,6 +798,34 @@ body {
     color: var(--error);
 }
 
+/* Transaction Actions */
+.transaction-actions {
+    display: flex;
+    gap: var(--space-xs);
+    margin-left: var(--space-sm);
+}
+
+.btn-delete {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-200);
+    color: var(--gray-600);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all var(--transition-fast);
+}
+
+.btn-delete:hover {
+    background: var(--error);
+    color: var(--white);
+}
+
 /* Pending Item Actions */
 .pending-actions {
     display: flex;
@@ -928,6 +1022,17 @@ body {
     .btn-reject {
         flex: 1;
     }
+    
+    .transaction-item {
+        flex-wrap: wrap;
+    }
+    
+    .transaction-actions {
+        width: 100%;
+        margin-left: 0;
+        margin-top: var(--space-sm);
+        justify-content: flex-end;
+    }
 }
 
 /* ============================================
@@ -937,7 +1042,8 @@ body {
     .header,
     .btn,
     .file-upload,
-    .pending-actions {
+    .pending-actions,
+    .transaction-actions {
         display: none !important;
     }
     
