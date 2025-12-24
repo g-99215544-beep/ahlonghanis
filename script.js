@@ -1,14 +1,14 @@
 /**
  * ============================================
  * SISTEM PENJEJAK HUTANG KELUARGA
- * Frontend JavaScript
+ * Frontend JavaScript v2
  * ============================================
  */
 
 // ============================================
-// API URL - SUDAH DIKONFIGURASI
+// API URL
 // ============================================
-const API_URL = "https://script.google.com/macros/s/AKfycbxyb2cC_KRWBtvI4jOCA3Y74nBxNT-azwG-9Yw88vkbj267e1JUglI0kckXvFM7GI5s/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxkzGIqgCk4Pq3tcr9Oc0iYeaRPvhKDOZmEwr1CcaoL_tNOBJgWg_fzlD57bx4uGhQx/exec";
 
 // ============================================
 // KONFIGURASI LOGIN
@@ -17,17 +17,20 @@ const USERS = {
     "qis12345": {
         name: "Qistina Hanan",
         role: "user",
-        avatar: "👧"
+        avatar: "👧",
+        key: "qistina"
     },
     "ziq12345": {
         name: "Haziq Haikal",
         role: "user",
-        avatar: "👦"
+        avatar: "👦",
+        key: "haziq"
     },
     "admin123": {
         name: "Admin",
         role: "admin",
-        avatar: "👨‍💼"
+        avatar: "👨‍💼",
+        key: "admin"
     }
 };
 
@@ -57,7 +60,10 @@ const elements = {
     loginError: document.getElementById("loginError"),
     
     // User Screen
-    userAvatar: document.getElementById("userAvatar"),
+    userAvatarWrapper: document.getElementById("userAvatarWrapper"),
+    userAvatarImg: document.getElementById("userAvatarImg"),
+    userAvatarEmoji: document.getElementById("userAvatarEmoji"),
+    userAvatarInput: document.getElementById("userAvatarInput"),
     userName: document.getElementById("userName"),
     userBalance: document.getElementById("userBalance"),
     balanceStatus: document.getElementById("balanceStatus"),
@@ -76,6 +82,10 @@ const elements = {
     userTransactions: document.getElementById("userTransactions"),
     
     // Admin Screen
+    adminAvatarWrapper: document.getElementById("adminAvatarWrapper"),
+    adminAvatarImg: document.getElementById("adminAvatarImg"),
+    adminAvatarEmoji: document.getElementById("adminAvatarEmoji"),
+    adminAvatarInput: document.getElementById("adminAvatarInput"),
     adminLogoutBtn: document.getElementById("adminLogoutBtn"),
     qistinaBalance: document.getElementById("qistinaBalance"),
     haziqBalance: document.getElementById("haziqBalance"),
@@ -102,19 +112,6 @@ const elements = {
 // Format currency
 function formatCurrency(amount) {
     return parseFloat(amount || 0).toFixed(2);
-}
-
-// Format date
-function formatDate(dateString) {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("ms-MY", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-    });
 }
 
 // Show toast notification
@@ -161,6 +158,59 @@ function fileToBase64(file) {
 }
 
 // ============================================
+// PROFILE PICTURE FUNCTIONS
+// ============================================
+
+// Save profile picture to localStorage
+function saveProfilePicture(userKey, imageData) {
+    localStorage.setItem(`profile_${userKey}`, imageData);
+}
+
+// Load profile picture from localStorage
+function loadProfilePicture(userKey) {
+    return localStorage.getItem(`profile_${userKey}`);
+}
+
+// Update avatar display
+function updateAvatarDisplay(imgElement, emojiElement, imageData) {
+    if (imageData) {
+        imgElement.src = imageData;
+        imgElement.classList.add("show");
+    } else {
+        imgElement.src = "";
+        imgElement.classList.remove("show");
+    }
+}
+
+// Handle avatar upload
+async function handleAvatarUpload(e, userKey, imgElement, emojiElement) {
+    const file = e.target.files[0];
+    
+    if (file) {
+        // Check file size (max 2MB for profile pics)
+        if (file.size > 2 * 1024 * 1024) {
+            showToast("Gambar terlalu besar. Maksimum 2MB.", "error");
+            return;
+        }
+        
+        // Check file type
+        if (!file.type.startsWith("image/")) {
+            showToast("Sila pilih fail gambar sahaja.", "error");
+            return;
+        }
+        
+        try {
+            const imageData = await fileToBase64(file);
+            saveProfilePicture(userKey, imageData);
+            updateAvatarDisplay(imgElement, emojiElement, imageData);
+            showToast("Gambar profil berjaya dikemaskini!");
+        } catch (error) {
+            showToast("Gagal memuat naik gambar.", "error");
+        }
+    }
+}
+
+// ============================================
 // API FUNCTIONS
 // ============================================
 
@@ -189,7 +239,7 @@ async function fetchData() {
 // Submit payment
 async function submitPayment(name, amount, imageBase64, notes) {
     try {
-        const response = await fetch(API_URL, {
+        await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
             headers: {
@@ -204,8 +254,6 @@ async function submitPayment(name, amount, imageBase64, notes) {
             })
         });
         
-        // Dengan no-cors, kita tak dapat baca response
-        // Jadi kita anggap berjaya dan refresh data
         return { success: true };
         
     } catch (error) {
@@ -216,7 +264,7 @@ async function submitPayment(name, amount, imageBase64, notes) {
 // Approve payment
 async function approvePayment(rowIndex) {
     try {
-        const response = await fetch(API_URL, {
+        await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
             headers: {
@@ -238,7 +286,7 @@ async function approvePayment(rowIndex) {
 // Reject payment
 async function rejectPayment(rowIndex) {
     try {
-        const response = await fetch(API_URL, {
+        await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
             headers: {
@@ -260,7 +308,7 @@ async function rejectPayment(rowIndex) {
 // Add debt
 async function addDebt(name, amount, notes) {
     try {
-        const response = await fetch(API_URL, {
+        await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
             headers: {
@@ -271,6 +319,28 @@ async function addDebt(name, amount, notes) {
                 name: name,
                 amount: amount,
                 notes: notes
+            })
+        });
+        
+        return { success: true };
+        
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Delete transaction
+async function deleteTransaction(rowIndex) {
+    try {
+        await fetch(API_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "text/plain"
+            },
+            body: JSON.stringify({
+                action: "delete",
+                rowIndex: rowIndex
             })
         });
         
@@ -312,7 +382,7 @@ function updateUserUI() {
     // Update transaction history
     const userTransactions = appData.transactions
         .filter(t => t.name === currentUser.name)
-        .reverse(); // Latest first
+        .reverse();
     
     if (userTransactions.length === 0) {
         elements.userTransactions.innerHTML = `
@@ -376,7 +446,7 @@ function updateAdminUI() {
         `).join("");
     }
     
-    // Update all transactions
+    // Update all transactions with delete button
     const sortedTransactions = [...appData.transactions].reverse();
     
     if (sortedTransactions.length === 0) {
@@ -384,7 +454,7 @@ function updateAdminUI() {
             <p class="empty-state">Tiada transaksi lagi</p>
         `;
     } else {
-        elements.allTransactions.innerHTML = sortedTransactions.slice(0, 20).map(t => `
+        elements.allTransactions.innerHTML = sortedTransactions.slice(0, 50).map(t => `
             <div class="transaction-item">
                 <div class="transaction-icon ${t.type.toLowerCase()}">
                     ${t.type === "Debt" ? "📥" : "📤"}
@@ -397,6 +467,9 @@ function updateAdminUI() {
                 <div class="transaction-amount">
                     <div class="amount ${t.type.toLowerCase()}">${t.type === "Debt" ? "+" : "-"}RM${formatCurrency(t.amount)}</div>
                     <div class="transaction-status status-${t.status.toLowerCase()}">${t.status}</div>
+                </div>
+                <div class="transaction-actions">
+                    <button class="btn-delete" onclick="handleDelete(${t.rowIndex})" title="Padam">🗑️</button>
                 </div>
             </div>
         `).join("");
@@ -419,11 +492,19 @@ function handleLogin(e) {
         elements.passwordInput.value = "";
         
         if (currentUser.role === "admin") {
+            // Load admin profile picture
+            const adminPic = loadProfilePicture(currentUser.key);
+            updateAvatarDisplay(elements.adminAvatarImg, elements.adminAvatarEmoji, adminPic);
+            elements.adminAvatarEmoji.textContent = currentUser.avatar;
+            
             switchScreen("adminScreen");
         } else {
-            // Update user info
-            elements.userAvatar.textContent = currentUser.avatar;
+            // Load user profile picture
+            const userPic = loadProfilePicture(currentUser.key);
+            updateAvatarDisplay(elements.userAvatarImg, elements.userAvatarEmoji, userPic);
+            elements.userAvatarEmoji.textContent = currentUser.avatar;
             elements.userName.textContent = currentUser.name;
+            
             switchScreen("userScreen");
         }
         
@@ -460,21 +541,18 @@ async function handleFileChange(e) {
     const file = e.target.files[0];
     
     if (file) {
-        // Check file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             showToast("Fail terlalu besar. Maksimum 5MB.", "error");
             elements.receiptInput.value = "";
             return;
         }
         
-        // Check file type
         if (!file.type.startsWith("image/")) {
             showToast("Sila pilih fail gambar sahaja.", "error");
             elements.receiptInput.value = "";
             return;
         }
         
-        // Show preview
         const reader = new FileReader();
         reader.onload = (e) => {
             elements.previewImg.src = e.target.result;
@@ -511,7 +589,6 @@ async function handlePaymentSubmit(e) {
         return;
     }
     
-    // Show loading state
     const btnText = elements.submitPaymentBtn.querySelector(".btn-text");
     const btnLoading = elements.submitPaymentBtn.querySelector(".btn-loading");
     btnText.classList.add("hidden");
@@ -519,19 +596,14 @@ async function handlePaymentSubmit(e) {
     elements.submitPaymentBtn.disabled = true;
     
     try {
-        // Convert image to Base64
         const imageBase64 = await fileToBase64(file);
-        
-        // Submit payment
         await submitPayment(currentUser.name, amount, imageBase64, notes);
         
         showToast("Bayaran berjaya dihantar! Menunggu kelulusan.");
         
-        // Reset form
         elements.paymentForm.reset();
         resetImagePreview();
         
-        // Tunggu sebentar kemudian refresh data
         setTimeout(async () => {
             await fetchData();
         }, 1500);
@@ -540,7 +612,6 @@ async function handlePaymentSubmit(e) {
         console.error("Payment error:", error);
         showToast("Gagal menghantar bayaran: " + error.message, "error");
     } finally {
-        // Reset button state
         btnText.classList.remove("hidden");
         btnLoading.classList.add("hidden");
         elements.submitPaymentBtn.disabled = false;
@@ -565,7 +636,6 @@ async function handleAddDebtSubmit(e) {
         return;
     }
     
-    // Show loading state
     const btnText = elements.addDebtBtn.querySelector(".btn-text");
     const btnLoading = elements.addDebtBtn.querySelector(".btn-loading");
     btnText.classList.add("hidden");
@@ -577,10 +647,8 @@ async function handleAddDebtSubmit(e) {
         
         showToast("Hutang berjaya ditambah!");
         
-        // Reset form
         elements.addDebtForm.reset();
         
-        // Tunggu sebentar kemudian refresh data
         setTimeout(async () => {
             await fetchData();
         }, 1500);
@@ -589,14 +657,13 @@ async function handleAddDebtSubmit(e) {
         console.error("Add debt error:", error);
         showToast("Gagal menambah hutang: " + error.message, "error");
     } finally {
-        // Reset button state
         btnText.classList.remove("hidden");
         btnLoading.classList.add("hidden");
         elements.addDebtBtn.disabled = false;
     }
 }
 
-// Approve payment handler (global function for onclick)
+// Approve payment handler
 async function handleApprove(rowIndex) {
     if (!confirm("Adakah anda pasti mahu meluluskan bayaran ini?")) {
         return;
@@ -608,7 +675,6 @@ async function handleApprove(rowIndex) {
         await approvePayment(rowIndex);
         showToast("Bayaran telah diluluskan!");
         
-        // Tunggu sebentar kemudian refresh data
         setTimeout(async () => {
             await fetchData();
             showLoading(false);
@@ -621,7 +687,7 @@ async function handleApprove(rowIndex) {
     }
 }
 
-// Reject payment handler (global function for onclick)
+// Reject payment handler
 async function handleReject(rowIndex) {
     if (!confirm("Adakah anda pasti mahu menolak bayaran ini?")) {
         return;
@@ -633,7 +699,6 @@ async function handleReject(rowIndex) {
         await rejectPayment(rowIndex);
         showToast("Bayaran telah ditolak.");
         
-        // Tunggu sebentar kemudian refresh data
         setTimeout(async () => {
             await fetchData();
             showLoading(false);
@@ -642,6 +707,30 @@ async function handleReject(rowIndex) {
     } catch (error) {
         console.error("Reject error:", error);
         showToast("Gagal menolak bayaran: " + error.message, "error");
+        showLoading(false);
+    }
+}
+
+// Delete transaction handler
+async function handleDelete(rowIndex) {
+    if (!confirm("Adakah anda pasti mahu PADAM transaksi ini? Tindakan ini tidak boleh dibatalkan!")) {
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        await deleteTransaction(rowIndex);
+        showToast("Transaksi telah dipadam!");
+        
+        setTimeout(async () => {
+            await fetchData();
+            showLoading(false);
+        }, 1500);
+        
+    } catch (error) {
+        console.error("Delete error:", error);
+        showToast("Gagal memadam transaksi: " + error.message, "error");
         showLoading(false);
     }
 }
@@ -657,6 +746,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // Logout
     elements.logoutBtn.addEventListener("click", handleLogout);
     elements.adminLogoutBtn.addEventListener("click", handleLogout);
+    
+    // User Avatar Upload
+    elements.userAvatarInput.addEventListener("change", (e) => {
+        if (currentUser) {
+            handleAvatarUpload(e, currentUser.key, elements.userAvatarImg, elements.userAvatarEmoji);
+        }
+    });
+    
+    // Admin Avatar Upload
+    elements.adminAvatarInput.addEventListener("change", (e) => {
+        if (currentUser) {
+            handleAvatarUpload(e, currentUser.key, elements.adminAvatarImg, elements.adminAvatarEmoji);
+        }
+    });
     
     // File upload
     elements.receiptInput.addEventListener("change", handleFileChange);
@@ -700,3 +803,4 @@ document.addEventListener("DOMContentLoaded", () => {
 // ============================================
 window.handleApprove = handleApprove;
 window.handleReject = handleReject;
+window.handleDelete = handleDelete;
