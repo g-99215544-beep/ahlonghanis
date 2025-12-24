@@ -489,6 +489,14 @@ function handleLogin(e) {
     
     const password = elements.passwordInput.value.trim();
     
+    // Check if users data is loaded
+    if (!appData.users || Object.keys(appData.users).length === 0) {
+        elements.loginError.textContent = "Sistem sedang memuatkan data. Sila tunggu sebentar dan cuba lagi.";
+        // Try to fetch data again
+        fetchData();
+        return;
+    }
+    
     // Find user by password
     let foundUser = null;
     let foundKey = null;
@@ -871,15 +879,23 @@ async function handleDelete(rowIndex) {
 document.addEventListener("DOMContentLoaded", async () => {
     initElements();
     
+    // Show loading while fetching initial data
+    showLoading(true);
+    
     // Fetch initial data (for login validation)
     try {
         const response = await fetch(API_URL);
         const data = await response.json();
         if (data.success) {
             appData = data;
+            console.log("Data loaded successfully:", Object.keys(appData.users || {}).length, "users");
+        } else {
+            console.error("API Error:", data.error);
         }
     } catch (error) {
         console.error("Initial fetch error:", error);
+    } finally {
+        showLoading(false);
     }
     
     // Login form
@@ -999,4 +1015,3 @@ window.handleReject = handleReject;
 window.handleDelete = handleDelete;
 window.openEditPassword = openEditPassword;
 window.handleDeleteUser = handleDeleteUser;
-
