@@ -1,14 +1,14 @@
 /**
  * ============================================
  * SISTEM PENJEJAK HUTANG KELUARGA
- * Frontend JavaScript v2
+ * Frontend JavaScript v3 - Fixed screen switching
  * ============================================
  */
 
 // ============================================
 // API URL
 // ============================================
-const API_URL = "https://script.google.com/macros/s/AKfycbxkzGIqgCk4Pq3tcr9Oc0iYeaRPvhKDOZmEwr1CcaoL_tNOBJgWg_fzlD57bx4uGhQx/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxyb2cC_KRWBtvI4jOCA3Y74nBxNT-azwG-9Yw88vkbj267e1JUglI0kckXvFM7GI5s/exec";
 
 // ============================================
 // KONFIGURASI LOGIN
@@ -45,76 +45,78 @@ let appData = {
 };
 
 // ============================================
-// DOM ELEMENTS
+// DOM ELEMENTS - Initialize after DOM loaded
 // ============================================
-const elements = {
-    // Screens
-    loginScreen: document.getElementById("loginScreen"),
-    userScreen: document.getElementById("userScreen"),
-    adminScreen: document.getElementById("adminScreen"),
-    
-    // Login
-    loginForm: document.getElementById("loginForm"),
-    passwordInput: document.getElementById("passwordInput"),
-    togglePassword: document.getElementById("togglePassword"),
-    loginError: document.getElementById("loginError"),
-    
-    // User Screen
-    userAvatarWrapper: document.getElementById("userAvatarWrapper"),
-    userAvatarImg: document.getElementById("userAvatarImg"),
-    userAvatarEmoji: document.getElementById("userAvatarEmoji"),
-    userAvatarInput: document.getElementById("userAvatarInput"),
-    userName: document.getElementById("userName"),
-    userBalance: document.getElementById("userBalance"),
-    balanceStatus: document.getElementById("balanceStatus"),
-    logoutBtn: document.getElementById("logoutBtn"),
-    
-    // Payment Form
-    paymentForm: document.getElementById("paymentForm"),
-    amountInput: document.getElementById("amountInput"),
-    receiptInput: document.getElementById("receiptInput"),
-    notesInput: document.getElementById("notesInput"),
-    fileUploadArea: document.getElementById("fileUploadArea"),
-    imagePreview: document.getElementById("imagePreview"),
-    previewImg: document.getElementById("previewImg"),
-    removeImage: document.getElementById("removeImage"),
-    submitPaymentBtn: document.getElementById("submitPaymentBtn"),
-    userTransactions: document.getElementById("userTransactions"),
-    
-    // Admin Screen
-    adminAvatarWrapper: document.getElementById("adminAvatarWrapper"),
-    adminAvatarImg: document.getElementById("adminAvatarImg"),
-    adminAvatarEmoji: document.getElementById("adminAvatarEmoji"),
-    adminAvatarInput: document.getElementById("adminAvatarInput"),
-    adminLogoutBtn: document.getElementById("adminLogoutBtn"),
-    qistinaBalance: document.getElementById("qistinaBalance"),
-    haziqBalance: document.getElementById("haziqBalance"),
-    addDebtForm: document.getElementById("addDebtForm"),
-    debtName: document.getElementById("debtName"),
-    debtAmount: document.getElementById("debtAmount"),
-    debtNotes: document.getElementById("debtNotes"),
-    addDebtBtn: document.getElementById("addDebtBtn"),
-    pendingCount: document.getElementById("pendingCount"),
-    pendingList: document.getElementById("pendingList"),
-    allTransactions: document.getElementById("allTransactions"),
-    
-    // Global
-    toast: document.getElementById("toast"),
-    toastIcon: document.getElementById("toastIcon"),
-    toastMessage: document.getElementById("toastMessage"),
-    loadingOverlay: document.getElementById("loadingOverlay")
-};
+let elements = {};
+
+function initElements() {
+    elements = {
+        // Screens
+        loginScreen: document.getElementById("loginScreen"),
+        userScreen: document.getElementById("userScreen"),
+        adminScreen: document.getElementById("adminScreen"),
+        
+        // Login
+        loginForm: document.getElementById("loginForm"),
+        passwordInput: document.getElementById("passwordInput"),
+        togglePassword: document.getElementById("togglePassword"),
+        loginError: document.getElementById("loginError"),
+        
+        // User Screen
+        userAvatarWrapper: document.getElementById("userAvatarWrapper"),
+        userAvatarImg: document.getElementById("userAvatarImg"),
+        userAvatarEmoji: document.getElementById("userAvatarEmoji"),
+        userAvatarInput: document.getElementById("userAvatarInput"),
+        userName: document.getElementById("userName"),
+        userBalance: document.getElementById("userBalance"),
+        balanceStatus: document.getElementById("balanceStatus"),
+        logoutBtn: document.getElementById("logoutBtn"),
+        
+        // Payment Form
+        paymentForm: document.getElementById("paymentForm"),
+        amountInput: document.getElementById("amountInput"),
+        receiptInput: document.getElementById("receiptInput"),
+        notesInput: document.getElementById("notesInput"),
+        fileUploadArea: document.getElementById("fileUploadArea"),
+        imagePreview: document.getElementById("imagePreview"),
+        previewImg: document.getElementById("previewImg"),
+        removeImage: document.getElementById("removeImage"),
+        submitPaymentBtn: document.getElementById("submitPaymentBtn"),
+        userTransactions: document.getElementById("userTransactions"),
+        
+        // Admin Screen
+        adminAvatarWrapper: document.getElementById("adminAvatarWrapper"),
+        adminAvatarImg: document.getElementById("adminAvatarImg"),
+        adminAvatarEmoji: document.getElementById("adminAvatarEmoji"),
+        adminAvatarInput: document.getElementById("adminAvatarInput"),
+        adminLogoutBtn: document.getElementById("adminLogoutBtn"),
+        qistinaBalance: document.getElementById("qistinaBalance"),
+        haziqBalance: document.getElementById("haziqBalance"),
+        addDebtForm: document.getElementById("addDebtForm"),
+        debtName: document.getElementById("debtName"),
+        debtAmount: document.getElementById("debtAmount"),
+        debtNotes: document.getElementById("debtNotes"),
+        addDebtBtn: document.getElementById("addDebtBtn"),
+        pendingCount: document.getElementById("pendingCount"),
+        pendingList: document.getElementById("pendingList"),
+        allTransactions: document.getElementById("allTransactions"),
+        
+        // Global
+        toast: document.getElementById("toast"),
+        toastIcon: document.getElementById("toastIcon"),
+        toastMessage: document.getElementById("toastMessage"),
+        loadingOverlay: document.getElementById("loadingOverlay")
+    };
+}
 
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
 
-// Format currency
 function formatCurrency(amount) {
     return parseFloat(amount || 0).toFixed(2);
 }
 
-// Show toast notification
 function showToast(message, type = "success") {
     elements.toastIcon.textContent = type === "success" ? "✓" : "✕";
     elements.toastMessage.textContent = message;
@@ -130,7 +132,6 @@ function showToast(message, type = "success") {
     }, 3000);
 }
 
-// Show/hide loading overlay
 function showLoading(show = true) {
     if (show) {
         elements.loadingOverlay.classList.remove("hidden");
@@ -139,15 +140,27 @@ function showLoading(show = true) {
     }
 }
 
-// Switch screen
+// ============================================
+// CRITICAL: SCREEN SWITCHING FUNCTION
+// ============================================
 function switchScreen(screenId) {
-    document.querySelectorAll(".screen").forEach(screen => {
+    // Hide ALL screens first
+    const allScreens = document.querySelectorAll(".screen");
+    allScreens.forEach(screen => {
         screen.classList.remove("active");
     });
-    document.getElementById(screenId).classList.add("active");
+    
+    // Show only the target screen
+    const targetScreen = document.getElementById(screenId);
+    if (targetScreen) {
+        targetScreen.classList.add("active");
+        // Scroll to top
+        window.scrollTo(0, 0);
+    }
+    
+    console.log("Switched to screen:", screenId);
 }
 
-// Convert file to Base64
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -161,39 +174,33 @@ function fileToBase64(file) {
 // PROFILE PICTURE FUNCTIONS
 // ============================================
 
-// Save profile picture to localStorage
 function saveProfilePicture(userKey, imageData) {
     localStorage.setItem(`profile_${userKey}`, imageData);
 }
 
-// Load profile picture from localStorage
 function loadProfilePicture(userKey) {
     return localStorage.getItem(`profile_${userKey}`);
 }
 
-// Update avatar display
 function updateAvatarDisplay(imgElement, emojiElement, imageData) {
-    if (imageData) {
+    if (imageData && imgElement) {
         imgElement.src = imageData;
         imgElement.classList.add("show");
-    } else {
+    } else if (imgElement) {
         imgElement.src = "";
         imgElement.classList.remove("show");
     }
 }
 
-// Handle avatar upload
 async function handleAvatarUpload(e, userKey, imgElement, emojiElement) {
     const file = e.target.files[0];
     
     if (file) {
-        // Check file size (max 2MB for profile pics)
         if (file.size > 2 * 1024 * 1024) {
             showToast("Gambar terlalu besar. Maksimum 2MB.", "error");
             return;
         }
         
-        // Check file type
         if (!file.type.startsWith("image/")) {
             showToast("Sila pilih fail gambar sahaja.", "error");
             return;
@@ -214,7 +221,6 @@ async function handleAvatarUpload(e, userKey, imgElement, emojiElement) {
 // API FUNCTIONS
 // ============================================
 
-// Fetch data from API
 async function fetchData() {
     try {
         showLoading(true);
@@ -236,15 +242,12 @@ async function fetchData() {
     }
 }
 
-// Submit payment
 async function submitPayment(name, amount, imageBase64, notes) {
     try {
         await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
-            headers: {
-                "Content-Type": "text/plain"
-            },
+            headers: { "Content-Type": "text/plain" },
             body: JSON.stringify({
                 action: "payment",
                 name: name,
@@ -253,67 +256,52 @@ async function submitPayment(name, amount, imageBase64, notes) {
                 notes: notes
             })
         });
-        
         return { success: true };
-        
     } catch (error) {
         throw error;
     }
 }
 
-// Approve payment
 async function approvePayment(rowIndex) {
     try {
         await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
-            headers: {
-                "Content-Type": "text/plain"
-            },
+            headers: { "Content-Type": "text/plain" },
             body: JSON.stringify({
                 action: "approve",
                 rowIndex: rowIndex
             })
         });
-        
         return { success: true };
-        
     } catch (error) {
         throw error;
     }
 }
 
-// Reject payment
 async function rejectPayment(rowIndex) {
     try {
         await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
-            headers: {
-                "Content-Type": "text/plain"
-            },
+            headers: { "Content-Type": "text/plain" },
             body: JSON.stringify({
                 action: "reject",
                 rowIndex: rowIndex
             })
         });
-        
         return { success: true };
-        
     } catch (error) {
         throw error;
     }
 }
 
-// Add debt
 async function addDebt(name, amount, notes) {
     try {
         await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
-            headers: {
-                "Content-Type": "text/plain"
-            },
+            headers: { "Content-Type": "text/plain" },
             body: JSON.stringify({
                 action: "addDebt",
                 name: name,
@@ -321,31 +309,24 @@ async function addDebt(name, amount, notes) {
                 notes: notes
             })
         });
-        
         return { success: true };
-        
     } catch (error) {
         throw error;
     }
 }
 
-// Delete transaction
 async function deleteTransaction(rowIndex) {
     try {
         await fetch(API_URL, {
             method: "POST",
             mode: "no-cors",
-            headers: {
-                "Content-Type": "text/plain"
-            },
+            headers: { "Content-Type": "text/plain" },
             body: JSON.stringify({
                 action: "delete",
                 rowIndex: rowIndex
             })
         });
-        
         return { success: true };
-        
     } catch (error) {
         throw error;
     }
@@ -366,11 +347,9 @@ function updateUI() {
 }
 
 function updateUserUI() {
-    // Update balance
     const balance = appData.balances[currentUser.name] || 0;
     elements.userBalance.textContent = formatCurrency(balance);
     
-    // Update status badge
     if (balance <= 0) {
         elements.balanceStatus.textContent = "Tiada Hutang 🎉";
         elements.balanceStatus.className = "status-badge status-good";
@@ -379,15 +358,12 @@ function updateUserUI() {
         elements.balanceStatus.className = "status-badge status-debt";
     }
     
-    // Update transaction history
     const userTransactions = appData.transactions
         .filter(t => t.name === currentUser.name)
         .reverse();
     
     if (userTransactions.length === 0) {
-        elements.userTransactions.innerHTML = `
-            <p class="empty-state">Tiada transaksi lagi</p>
-        `;
+        elements.userTransactions.innerHTML = `<p class="empty-state">Tiada transaksi lagi</p>`;
     } else {
         elements.userTransactions.innerHTML = userTransactions.map(t => `
             <div class="transaction-item">
@@ -409,18 +385,13 @@ function updateUserUI() {
 }
 
 function updateAdminUI() {
-    // Update balances
     elements.qistinaBalance.textContent = formatCurrency(appData.balances["Qistina Hanan"] || 0);
     elements.haziqBalance.textContent = formatCurrency(appData.balances["Haziq Haikal"] || 0);
     
-    // Update pending count
     elements.pendingCount.textContent = appData.pendingList.length;
     
-    // Update pending list
     if (appData.pendingList.length === 0) {
-        elements.pendingList.innerHTML = `
-            <p class="empty-state">Tiada bayaran menunggu kelulusan</p>
-        `;
+        elements.pendingList.innerHTML = `<p class="empty-state">Tiada bayaran menunggu kelulusan</p>`;
     } else {
         elements.pendingList.innerHTML = appData.pendingList.map(t => `
             <div class="pending-item" data-row="${t.rowIndex}">
@@ -429,11 +400,7 @@ function updateAdminUI() {
                     <div class="transaction-type">${t.name}</div>
                     <div class="transaction-meta">${t.timestamp}</div>
                     ${t.notes ? `<div class="transaction-meta">${t.notes}</div>` : ""}
-                    ${t.receiptURL ? `
-                        <a href="${t.receiptURL}" target="_blank" class="receipt-link">
-                            📷 Lihat Resit
-                        </a>
-                    ` : ""}
+                    ${t.receiptURL ? `<a href="${t.receiptURL}" target="_blank" class="receipt-link">📷 Lihat Resit</a>` : ""}
                 </div>
                 <div class="transaction-amount">
                     <div class="amount payment">RM${formatCurrency(t.amount)}</div>
@@ -446,13 +413,10 @@ function updateAdminUI() {
         `).join("");
     }
     
-    // Update all transactions with delete button
     const sortedTransactions = [...appData.transactions].reverse();
     
     if (sortedTransactions.length === 0) {
-        elements.allTransactions.innerHTML = `
-            <p class="empty-state">Tiada transaksi lagi</p>
-        `;
+        elements.allTransactions.innerHTML = `<p class="empty-state">Tiada transaksi lagi</p>`;
     } else {
         elements.allTransactions.innerHTML = sortedTransactions.slice(0, 50).map(t => `
             <div class="transaction-item">
@@ -480,7 +444,6 @@ function updateAdminUI() {
 // EVENT HANDLERS
 // ============================================
 
-// Login handler
 function handleLogin(e) {
     e.preventDefault();
     
@@ -495,20 +458,28 @@ function handleLogin(e) {
             // Load admin profile picture
             const adminPic = loadProfilePicture(currentUser.key);
             updateAvatarDisplay(elements.adminAvatarImg, elements.adminAvatarEmoji, adminPic);
-            elements.adminAvatarEmoji.textContent = currentUser.avatar;
+            if (elements.adminAvatarEmoji) {
+                elements.adminAvatarEmoji.textContent = currentUser.avatar;
+            }
             
+            // SWITCH TO ADMIN SCREEN - Hide login, show admin
             switchScreen("adminScreen");
         } else {
             // Load user profile picture
             const userPic = loadProfilePicture(currentUser.key);
             updateAvatarDisplay(elements.userAvatarImg, elements.userAvatarEmoji, userPic);
-            elements.userAvatarEmoji.textContent = currentUser.avatar;
-            elements.userName.textContent = currentUser.name;
+            if (elements.userAvatarEmoji) {
+                elements.userAvatarEmoji.textContent = currentUser.avatar;
+            }
+            if (elements.userName) {
+                elements.userName.textContent = currentUser.name;
+            }
             
+            // SWITCH TO USER SCREEN - Hide login, show user dashboard
             switchScreen("userScreen");
         }
         
-        // Fetch data
+        // Fetch data from API
         fetchData();
         
         showToast(`Selamat datang, ${currentUser.name}!`);
@@ -517,26 +488,25 @@ function handleLogin(e) {
     }
 }
 
-// Logout handler
 function handleLogout() {
     currentUser = null;
     appData = { balances: {}, pendingList: [], transactions: [] };
+    
+    // SWITCH BACK TO LOGIN SCREEN
     switchScreen("loginScreen");
     
     // Reset forms
-    elements.paymentForm.reset();
-    elements.addDebtForm.reset();
+    if (elements.paymentForm) elements.paymentForm.reset();
+    if (elements.addDebtForm) elements.addDebtForm.reset();
     resetImagePreview();
 }
 
-// Toggle password visibility
 function handleTogglePassword() {
     const type = elements.passwordInput.type === "password" ? "text" : "password";
     elements.passwordInput.type = type;
     elements.togglePassword.textContent = type === "password" ? "👁️" : "👁️‍🗨️";
 }
 
-// File input change handler
 async function handleFileChange(e) {
     const file = e.target.files[0];
     
@@ -563,15 +533,14 @@ async function handleFileChange(e) {
     }
 }
 
-// Remove image preview
 function resetImagePreview() {
-    elements.receiptInput.value = "";
-    elements.previewImg.src = "";
-    elements.imagePreview.classList.add("hidden");
-    elements.fileUploadArea.querySelector(".file-upload-content").classList.remove("hidden");
+    if (elements.receiptInput) elements.receiptInput.value = "";
+    if (elements.previewImg) elements.previewImg.src = "";
+    if (elements.imagePreview) elements.imagePreview.classList.add("hidden");
+    const fileContent = elements.fileUploadArea?.querySelector(".file-upload-content");
+    if (fileContent) fileContent.classList.remove("hidden");
 }
 
-// Payment form submit handler
 async function handlePaymentSubmit(e) {
     e.preventDefault();
     
@@ -618,7 +587,6 @@ async function handlePaymentSubmit(e) {
     }
 }
 
-// Add debt form submit handler
 async function handleAddDebtSubmit(e) {
     e.preventDefault();
     
@@ -663,7 +631,6 @@ async function handleAddDebtSubmit(e) {
     }
 }
 
-// Approve payment handler
 async function handleApprove(rowIndex) {
     if (!confirm("Adakah anda pasti mahu meluluskan bayaran ini?")) {
         return;
@@ -687,7 +654,6 @@ async function handleApprove(rowIndex) {
     }
 }
 
-// Reject payment handler
 async function handleReject(rowIndex) {
     if (!confirm("Adakah anda pasti mahu menolak bayaran ini?")) {
         return;
@@ -711,7 +677,6 @@ async function handleReject(rowIndex) {
     }
 }
 
-// Delete transaction handler
 async function handleDelete(rowIndex) {
     if (!confirm("Adakah anda pasti mahu PADAM transaksi ini? Tindakan ini tidak boleh dibatalkan!")) {
         return;
@@ -736,70 +701,99 @@ async function handleDelete(rowIndex) {
 }
 
 // ============================================
-// EVENT LISTENERS
+// INITIALIZE APP
 // ============================================
 document.addEventListener("DOMContentLoaded", () => {
-    // Login
-    elements.loginForm.addEventListener("submit", handleLogin);
-    elements.togglePassword.addEventListener("click", handleTogglePassword);
+    // Initialize DOM elements
+    initElements();
     
-    // Logout
-    elements.logoutBtn.addEventListener("click", handleLogout);
-    elements.adminLogoutBtn.addEventListener("click", handleLogout);
+    // Login form
+    if (elements.loginForm) {
+        elements.loginForm.addEventListener("submit", handleLogin);
+    }
+    
+    // Toggle password
+    if (elements.togglePassword) {
+        elements.togglePassword.addEventListener("click", handleTogglePassword);
+    }
+    
+    // Logout buttons
+    if (elements.logoutBtn) {
+        elements.logoutBtn.addEventListener("click", handleLogout);
+    }
+    if (elements.adminLogoutBtn) {
+        elements.adminLogoutBtn.addEventListener("click", handleLogout);
+    }
     
     // User Avatar Upload
-    elements.userAvatarInput.addEventListener("change", (e) => {
-        if (currentUser) {
-            handleAvatarUpload(e, currentUser.key, elements.userAvatarImg, elements.userAvatarEmoji);
-        }
-    });
+    if (elements.userAvatarInput) {
+        elements.userAvatarInput.addEventListener("change", (e) => {
+            if (currentUser) {
+                handleAvatarUpload(e, currentUser.key, elements.userAvatarImg, elements.userAvatarEmoji);
+            }
+        });
+    }
     
     // Admin Avatar Upload
-    elements.adminAvatarInput.addEventListener("change", (e) => {
-        if (currentUser) {
-            handleAvatarUpload(e, currentUser.key, elements.adminAvatarImg, elements.adminAvatarEmoji);
-        }
-    });
+    if (elements.adminAvatarInput) {
+        elements.adminAvatarInput.addEventListener("change", (e) => {
+            if (currentUser) {
+                handleAvatarUpload(e, currentUser.key, elements.adminAvatarImg, elements.adminAvatarEmoji);
+            }
+        });
+    }
     
-    // File upload
-    elements.receiptInput.addEventListener("change", handleFileChange);
-    elements.removeImage.addEventListener("click", resetImagePreview);
+    // File upload for receipt
+    if (elements.receiptInput) {
+        elements.receiptInput.addEventListener("change", handleFileChange);
+    }
+    if (elements.removeImage) {
+        elements.removeImage.addEventListener("click", resetImagePreview);
+    }
     
     // Drag and drop support
-    elements.fileUploadArea.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        elements.fileUploadArea.style.borderColor = "var(--primary)";
-        elements.fileUploadArea.style.background = "var(--primary-lighter)";
-    });
-    
-    elements.fileUploadArea.addEventListener("dragleave", () => {
-        elements.fileUploadArea.style.borderColor = "";
-        elements.fileUploadArea.style.background = "";
-    });
-    
-    elements.fileUploadArea.addEventListener("drop", (e) => {
-        e.preventDefault();
-        elements.fileUploadArea.style.borderColor = "";
-        elements.fileUploadArea.style.background = "";
+    if (elements.fileUploadArea) {
+        elements.fileUploadArea.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            elements.fileUploadArea.style.borderColor = "var(--primary)";
+            elements.fileUploadArea.style.background = "var(--primary-lighter)";
+        });
         
-        const file = e.dataTransfer.files[0];
-        if (file && file.type.startsWith("image/")) {
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            elements.receiptInput.files = dataTransfer.files;
-            handleFileChange({ target: elements.receiptInput });
-        }
-    });
+        elements.fileUploadArea.addEventListener("dragleave", () => {
+            elements.fileUploadArea.style.borderColor = "";
+            elements.fileUploadArea.style.background = "";
+        });
+        
+        elements.fileUploadArea.addEventListener("drop", (e) => {
+            e.preventDefault();
+            elements.fileUploadArea.style.borderColor = "";
+            elements.fileUploadArea.style.background = "";
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith("image/")) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                elements.receiptInput.files = dataTransfer.files;
+                handleFileChange({ target: elements.receiptInput });
+            }
+        });
+    }
     
     // Payment form
-    elements.paymentForm.addEventListener("submit", handlePaymentSubmit);
+    if (elements.paymentForm) {
+        elements.paymentForm.addEventListener("submit", handlePaymentSubmit);
+    }
     
     // Add debt form
-    elements.addDebtForm.addEventListener("submit", handleAddDebtSubmit);
+    if (elements.addDebtForm) {
+        elements.addDebtForm.addEventListener("submit", handleAddDebtSubmit);
+    }
+    
+    console.log("App initialized successfully!");
 });
 
 // ============================================
-// MAKE FUNCTIONS GLOBALLY AVAILABLE
+// GLOBAL FUNCTIONS
 // ============================================
 window.handleApprove = handleApprove;
 window.handleReject = handleReject;
