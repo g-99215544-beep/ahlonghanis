@@ -78,6 +78,7 @@ function initElements() {
         receiptInput: document.getElementById("receiptInput"),
         notesInput: document.getElementById("notesInput"),
         fileUploadArea: document.getElementById("fileUploadArea"),
+        fileUploadContent: document.getElementById("fileUploadContent"),
         imagePreview: document.getElementById("imagePreview"),
         previewImg: document.getElementById("previewImg"),
         removeImage: document.getElementById("removeImage"),
@@ -527,7 +528,9 @@ async function handleFileChange(e) {
         reader.onload = (e) => {
             elements.previewImg.src = e.target.result;
             elements.imagePreview.classList.remove("hidden");
-            elements.fileUploadArea.querySelector(".file-upload-content").classList.add("hidden");
+            if (elements.fileUploadContent) {
+                elements.fileUploadContent.classList.add("hidden");
+            }
         };
         reader.readAsDataURL(file);
     }
@@ -537,8 +540,7 @@ function resetImagePreview() {
     if (elements.receiptInput) elements.receiptInput.value = "";
     if (elements.previewImg) elements.previewImg.src = "";
     if (elements.imagePreview) elements.imagePreview.classList.add("hidden");
-    const fileContent = elements.fileUploadArea?.querySelector(".file-upload-content");
-    if (fileContent) fileContent.classList.remove("hidden");
+    if (elements.fileUploadContent) elements.fileUploadContent.classList.remove("hidden");
 }
 
 async function handlePaymentSubmit(e) {
